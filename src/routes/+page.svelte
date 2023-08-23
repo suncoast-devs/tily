@@ -86,7 +86,13 @@
         break
       case 'ASSIGN':
         const value = inst.args[1]
-        memory[inst.args[0]] = value === COUNT_VALUE ? tiles.length : value
+        if (value === COUNT_VALUE) {
+          memory[inst.args[0]] = tiles.length
+        } else if (Number.isNaN(value)) {
+          memory[inst.args[0]] = value
+        } else {
+          memory[inst.args[0]] = Number(value)
+        }
         break
       case 'TAG':
         if ((inst.args[0] as string).length < 2) showError(`No label for tag, e.g. "#TAG_NAME"`)
@@ -94,7 +100,12 @@
         break
       case 'INCREMENT':
         // TODO: Error checking; variable exists
-        memory[inst.args[0]] = memory[inst.args[0]] + 1
+        const x = memory[inst.args[0]]
+        if (typeof x == 'number') {
+          memory[inst.args[0]] = x + 1
+        } else {
+          memory[inst.args[0]] = String.fromCharCode(((x.toUpperCase().charCodeAt(0) - 65 + 1) % 26) + 65);
+        }
         break
       case 'JUMP_IF_EQUAL':
         // TODO: Error checking; tag exists, etc.
@@ -148,6 +159,10 @@
     } else {
       return 'text-emerald-600'
     }
+  }
+
+  function nextChar(c: string) {
+    return String.fromCharCode(((c.toUpperCase().charCodeAt(0) - 65 + 1) % 26) + 65);
   }
 </script>
 
@@ -256,7 +271,8 @@
           </li>
           <li>
             <code class="font-bold">INCREMENT [name]</code>: Increment the value at the named
-            location by 1. The value must be a number.
+            location by 1. If the value is a letter, it will be incremented to the next letter in
+            the alphabet (wrapping Z around to A).
           </li>
           <li>
             <code class="font-bold">JUMP_IF_EQUAL [name] [name] #[TAG]</code>: Jump to the point in
@@ -267,7 +283,7 @@
             given <code>#TAG</code>.
           </li>
           <li>
-            <code class="font-bold">EXIT [YES | NO]</code>: Exit the program with a YES or NO return
+            <code class="font-bold">STOP [YES | NO]</code>: Exit the program with a YES or NO return
             value.
           </li>
         </ul>
